@@ -206,9 +206,11 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(value = ServiceException.class)
     public CommonResult<?> serviceExceptionHandler(ServiceException ex) {
+        // 不包含的时候，才进行打印，避免 ex 堆栈过多
         if (!IGNORE_ERROR_MESSAGES.contains(ex.getMessage())) {
-            // 不包含的时候，才进行打印，避免 ex 堆栈过多
-            log.info("[serviceExceptionHandler]", ex);
+            // 即使打印，也只打印第一层 StackTraceElement，并且使用 warn 在控制台输出，更容易看到
+            StackTraceElement[] stackTrace = ex.getStackTrace();
+            log.warn("[serviceExceptionHandler]\n\t{}", stackTrace[0]);
         }
         return CommonResult.error(ex.getCode(), ex.getMessage());
     }
@@ -327,6 +329,12 @@ public class GlobalExceptionHandler {
             log.error("[支付模块 yudao-module-pay - 表结构未导入][参考 https://doc.iocoder.cn/pay/build/ 开启]");
             return CommonResult.error(NOT_IMPLEMENTED.getCode(),
                     "[支付模块 yudao-module-pay - 表结构未导入][参考 https://doc.iocoder.cn/pay/build/ 开启]");
+        }
+        // 8. AI 大模型
+        if (message.contains("ai_")) {
+            log.error("[AI 大模型 yudao-module-ai - 表结构未导入][参考 https://doc.iocoder.cn/ai/build/ 开启]");
+            return CommonResult.error(NOT_IMPLEMENTED.getCode(),
+                    "[AI 大模型 yudao-module-ai - 表结构未导入][参考 https://doc.iocoder.cn/ai/build/ 开启]");
         }
         return null;
     }
